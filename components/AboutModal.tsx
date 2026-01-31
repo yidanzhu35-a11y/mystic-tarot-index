@@ -28,13 +28,13 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         
         <div className="space-y-4 text-gray-300 font-light leading-relaxed mb-8">
           <p>
-            本站的目的是帮助塔罗初学者快速查阅和记忆牌意。我们整理了经典的伟特塔罗体系解读，涵盖感情、事业、财富等多个维度。
+            本站的目的是帮助塔罗初学者快速查阅和记忆牌意。这里有经典的韦特塔罗体系解读，涵盖感情、事业、财富、成长四个维度。
           </p>
           <p className="text-mystic-gold/80 italic">
             请记住：本站解读仅供参考，直觉永远是我们最好的引路人。
           </p>
           <p>
-            祝大家未来都不再需要本站，开启属于自己的塔罗叙事！
+            祝大家未来都不再需要这里，开启属于你的塔罗叙事！
           </p>
         </div>
 
