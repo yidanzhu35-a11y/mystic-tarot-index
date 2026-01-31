@@ -177,7 +177,12 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose }) => {
                 className="group bg-[#2A2B55] p-4 rounded border border-transparent hover:border-mystic-gold/20 transition-all duration-300"
               >
                 <div className="flex justify-between items-start gap-4">
-                  <p className="text-gray-200 font-light leading-relaxed text-sm md:text-base">{text}</p>
+                  <p className="text-gray-200 font-light leading-relaxed text-sm md:text-base">
+                    <span className="font-bold text-mystic-gold">
+                      {idx === 0 ? '现状：' : idx === 1 ? '建议：' : '未来：'}
+                    </span>
+                    {text}
+                  </p>
                   <button
                     onClick={() => handleCopy(text, idx)}
                     className="shrink-0 text-mystic-gold/40 hover:text-mystic-gold transition-colors p-1"
