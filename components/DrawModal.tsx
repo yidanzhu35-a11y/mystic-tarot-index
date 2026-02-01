@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { TAROT_DECK } from '../constants';
 import { TarotCard } from '../types';
-import Webcam from 'react-webcam';
 
 interface DrawModalProps {
   isOpen: boolean;
@@ -13,67 +12,8 @@ const DrawModal: React.FC<DrawModalProps> = ({ isOpen, onClose }) => {
   const [selectedCard, setSelectedCard] = useState<TarotCard | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isReversed, setIsReversed] = useState(false);
-  const [cards, setCards] = useState<number[]>([]);
-  const [lastHandX, setLastHandX] = useState<number | null>(null);
-  const webcamRef = useRef<Webcam>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   if (!isOpen) return null;
-
-  // 初始化卡牌数组
-  useEffect(() => {
-    if (!isOpen || selectedCard) return;
-    
-    // 打乱卡牌顺序
-    const shuffledCards = [...Array(78)].map((_, index) => index).sort(() => Math.random() - 0.5);
-    setCards(shuffledCards);
-
-    // 初始化 MediaPipe
-    initMediaPipe();
-  }, [isOpen, selectedCard]);
-
-  // 初始化 MediaPipe 手势识别
-  const initMediaPipe = async () => {
-    try {
-      // 动态导入 MediaPipe
-      const { Hands } = await import('@mediapipe/hands');
-      
-      console.log('MediaPipe Hands imported successfully');
-      
-      // 这里可以添加 MediaPipe 初始化代码
-      // 由于环境限制，暂时使用简化版的手势检测
-    } catch (error) {
-      console.error('Error importing MediaPipe:', error);
-      // 降级为鼠标交互
-      setupMouseInteraction();
-    }
-  };
-
-  // 设置鼠标交互（降级方案）
-  const setupMouseInteraction = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    canvas.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      
-      if (lastHandX !== null) {
-        const deltaX = x - lastHandX;
-        if (Math.abs(deltaX) > 50) {
-          // 鼠标移动超过阈值，打乱卡牌
-          const shuffledCards = [...cards].sort(() => Math.random() - 0.5);
-          setCards(shuffledCards);
-        }
-      }
-      
-      setLastHandX(x);
-    });
-
-    canvas.addEventListener('mouseleave', () => {
-      setLastHandX(null);
-    });
-  };
 
   // 抽牌函数
   const drawCard = () => {
@@ -94,15 +34,6 @@ const DrawModal: React.FC<DrawModalProps> = ({ isOpen, onClose }) => {
   // 关闭抽牌结果，回到抽牌界面
   const closeCardResult = () => {
     setSelectedCard(null);
-    // 重新打乱卡牌
-    const shuffledCards = [...Array(78)].map((_, index) => index).sort(() => Math.random() - 0.5);
-    setCards(shuffledCards);
-  };
-
-  // 打乱卡牌
-  const shuffleCards = () => {
-    const shuffledCards = [...cards].sort(() => Math.random() - 0.5);
-    setCards(shuffledCards);
   };
 
   return (
@@ -149,50 +80,35 @@ const DrawModal: React.FC<DrawModalProps> = ({ isOpen, onClose }) => {
 
           {/* 主要卡牌区域 */}
           <div className="relative z-10 flex items-center justify-center">
-            {/* 5张卡牌展示 */}
+            {/* 3张卡牌展示 */}
             <div className="flex gap-4">
-              {[...Array(5)].map((_, index) => {
-                // 只显示中间3张卡牌
-                if (index < 1 || index > 3) return null;
-                
-                return (
-                  <div
-                    key={index}
-                    className={`
-                      w-24 h-36 border border-mystic-gold/30 bg-mystic-gold/10 rounded-sm
-                      flex items-center justify-center cursor-pointer transition-all duration-300
-                      ${index === 2 ? 'scale-110 border-mystic-gold/50' : ''}
-                      hover:scale-105 hover:border-mystic-gold/50
-                    `}
-                    onClick={index === 2 ? drawCard : undefined}
-                  >
-                    {/* 卡牌背面图案 */}
-                    <div className="w-20 h-32 flex flex-col items-center justify-center">
-                      <div className="w-12 h-12 rounded-full border border-mystic-gold/50 flex items-center justify-center mb-2">
-                        <div className="w-8 h-8 rounded-full bg-mystic-gold/20"></div>
-                      </div>
-                      <div className="w-16 h-1 border border-mystic-gold/30"></div>
+              {[...Array(3)].map((_, index) => (
+                <div
+                  key={index}
+                  className={`
+                    w-24 h-36 border border-mystic-gold/30 bg-mystic-gold/10 rounded-sm
+                    flex items-center justify-center cursor-pointer transition-all duration-300
+                    ${index === 1 ? 'scale-110 border-mystic-gold/50' : ''}
+                    hover:scale-105 hover:border-mystic-gold/50
+                  `}
+                  onClick={index === 1 ? drawCard : undefined}
+                >
+                  {/* 卡牌背面图案 */}
+                  <div className="w-20 h-32 flex flex-col items-center justify-center">
+                    <div className="w-12 h-12 rounded-full border border-mystic-gold/50 flex items-center justify-center mb-2">
+                      <div className="w-8 h-8 rounded-full bg-mystic-gold/20"></div>
                     </div>
+                    <div className="w-16 h-1 border border-mystic-gold/30"></div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </div>
 
           {/* 提示文字 */}
           <div className="absolute bottom-20 z-10 text-center">
             <p className="text-mystic-gold mb-4">请抽取 1 张牌</p>
-            <p className="text-mystic-gold/70 text-sm">点击或滑动打乱卡牌，点击中间卡牌抽取</p>
-          </div>
-
-          {/* 打乱卡牌按钮 */}
-          <div className="absolute bottom-10 z-10 flex gap-4">
-            <button
-              onClick={shuffleCards}
-              className="px-4 py-2 rounded-full text-sm font-serif bg-mystic-gold/20 text-mystic-gold hover:bg-mystic-gold/30 transition-colors"
-            >
-              打乱卡牌
-            </button>
+            <p className="text-mystic-gold/70 text-sm">点击中间卡牌抽取</p>
           </div>
 
           {/* 关闭按钮 */}
@@ -202,13 +118,6 @@ const DrawModal: React.FC<DrawModalProps> = ({ isOpen, onClose }) => {
           >
             <X size={24} />
           </button>
-
-          {/* 手势检测区域 */}
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full z-0"
-            style={{ pointerEvents: 'auto' }}
-          />
         </div>
       ) : (
         /* 抽牌结果界面 */
@@ -265,12 +174,14 @@ const DrawModal: React.FC<DrawModalProps> = ({ isOpen, onClose }) => {
       )}
 
       {/* 添加星空动画样式 */}
-      <style jsx global>{`
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.2; }
-          50% { opacity: 0.8; }
-        }
-      `}</style>
+      <style jsx global>{
+        `
+          @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.8; }
+          }
+        `
+      }</style>
     </div>
   );
 };
