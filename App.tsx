@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import Header from './components/Header';
 import CardModal from './components/CardModal';
 import AboutModal from './components/AboutModal';
-import DrawModal from './components/DrawModal';
 import { TAROT_DECK } from './constants';
 import { CardCategory, TarotCard } from './types';
 
@@ -11,7 +10,6 @@ const App: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<CardCategory | 'ALL'>('ALL');
   const [selectedCard, setSelectedCard] = useState<TarotCard | null>(null);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [isDrawOpen, setIsDrawOpen] = useState(false);
 
   // Filter Logic
   const filteredCards = useMemo(() => {
@@ -31,7 +29,6 @@ const App: React.FC = () => {
         activeFilter={activeFilter}
         setActiveFilter={setActiveFilter}
         onOpenAbout={() => setIsAboutOpen(true)}
-        onOpenDraw={() => setIsDrawOpen(true)}
       />
 
       <main className="max-w-7xl mx-auto px-4 mt-6">
@@ -98,10 +95,7 @@ const App: React.FC = () => {
         onClose={() => setIsAboutOpen(false)} 
       />
       
-      <DrawModal 
-        isOpen={isDrawOpen} 
-        onClose={() => setIsDrawOpen(false)} 
-      />
+
 
     </div>
   );

@@ -8,7 +8,6 @@ interface HeaderProps {
   activeFilter: CardCategory | 'ALL';
   setActiveFilter: (category: CardCategory | 'ALL') => void;
   onOpenAbout: () => void;
-  onOpenDraw: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -16,8 +15,7 @@ const Header: React.FC<HeaderProps> = ({
   setSearchTerm, 
   activeFilter, 
   setActiveFilter,
-  onOpenAbout,
-  onOpenDraw
+  onOpenAbout
 }) => {
   const categories = ['ALL', ...Object.values(CardCategory)];
 
@@ -47,19 +45,12 @@ const Header: React.FC<HeaderProps> = ({
           </div>
           
           <button 
-              onClick={onOpenDraw}
-              className="p-2 rounded-full hover:bg-mystic-gold/10 text-mystic-gold transition-colors flex items-center gap-2 mr-2"
-            >
-              <span className="hidden sm:inline font-serif text-sm">点击抽牌</span>
-              <span className="sm:hidden">🔮</span>
-            </button>
-            <button 
-              onClick={onOpenAbout}
-              className="p-2 rounded-full hover:bg-mystic-gold/10 text-mystic-gold transition-colors flex items-center gap-2"
-            >
-              <span className="hidden sm:inline font-serif text-sm">关于</span>
-              <Menu className="h-6 w-6" />
-            </button>
+            onClick={onOpenAbout}
+            className="p-2 rounded-full hover:bg-mystic-gold/10 text-mystic-gold transition-colors flex items-center gap-2"
+          >
+            <span className="hidden sm:inline font-serif text-sm">关于</span>
+            <Menu className="h-6 w-6" />
+          </button>
         </div>
 
         {/* Bottom Row: Filters (Scrollable on mobile) */}
