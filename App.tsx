@@ -22,77 +22,113 @@ const App: React.FC = () => {
   // 监听认证状态变化
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      console.log('Auth state changed:', {
+        user: currentUser ? 'logged in' : 'logged out',
+        timestamp: new Date().toISOString()
+      });
+      
       setUser(currentUser);
       setLoading(false);
       
+      // 首先总是从本地存储加载，确保快速响应
+      loadFavoritesFromLocalStorage();
+      console.log('Initial favorites loaded from localStorage');
+      
+      // 然后如果用户已登录，尝试与 Firebase 同步
       if (currentUser) {
-        // 用户已登录，从 Firebase 加载收藏
+        console.log('User logged in, syncing with Firebase:', currentUser.uid);
+        // 从 Firebase 加载数据（如果有新数据）
         await loadFavoritesFromFirebase(currentUser.uid);
-      } else {
-        // 用户未登录，从本地存储加载收藏
-        loadFavoritesFromLocalStorage();
+        // 确保本地数据同步到 Firebase
+        await saveFavorites();
       }
     });
 
     return unsubscribe;
   }, []);
 
-  // 从本地存储加载收藏
+  // 从本地存储加载收藏（优先使用）
   const loadFavoritesFromLocalStorage = () => {
     const savedFavorites = localStorage.getItem('favoriteTarotCards');
     if (savedFavorites) {
       try {
         const parsedFavorites = JSON.parse(savedFavorites);
+        console.log('Favorites loaded from localStorage:', parsedFavorites);
         setFavoriteCards(new Set(parsedFavorites));
       } catch (error) {
         console.error('Error loading favorites from localStorage:', error);
+        setFavoriteCards(new Set());
       }
     }
   };
 
-  // 从 Firebase 加载收藏
+  // 从 Firebase 加载收藏（作为备份和同步）
   const loadFavoritesFromFirebase = async (userId: string) => {
+    console.log('Loading favorites from Firebase for user:', userId);
     try {
       const userDoc = doc(db, 'users', userId);
       const userSnapshot = await getDoc(userDoc);
       
+      console.log('Firebase document exists:', userSnapshot.exists());
+      
       if (userSnapshot.exists()) {
         const userData = userSnapshot.data();
+        console.log('Firebase user data:', userData);
         const favorites = userData.favorites || [];
-        setFavoriteCards(new Set(favorites));
+        console.log('Favorites from Firebase:', favorites);
+        
+        // 如果 Firebase 中有数据，更新本地存储和状态
+        if (favorites.length > 0) {
+          setFavoriteCards(new Set(favorites));
+          localStorage.setItem('favoriteTarotCards', JSON.stringify(favorites));
+          console.log('Favorites synced from Firebase to localStorage');
+        }
       } else {
         // 用户文档不存在，创建新文档
+        console.log('Creating new user document');
+        const currentFavorites = Array.from(favoriteCards);
         await setDoc(userDoc, {
-          favorites: [],
+          favorites: currentFavorites,
           createdAt: new Date().toISOString()
         });
-        setFavoriteCards(new Set());
+        console.log('New user document created with current favorites:', currentFavorites);
       }
     } catch (error) {
       console.error('Error loading favorites from Firebase:', error);
-      // 加载失败，从本地存储加载
-      loadFavoritesFromLocalStorage();
+      // 加载失败，使用本地存储中的数据
+      console.log('Using localStorage data as backup');
     }
   };
 
-  // 保存收藏到 Firebase 或本地存储
+  // 保存收藏到本地存储和 Firebase（本地优先）
   const saveFavorites = async () => {
     const favoritesArray = Array.from(favoriteCards);
     
+    console.log('Saving favorites:', {
+      favoritesArray,
+      user: user ? 'logged in' : 'not logged in',
+      timestamp: new Date().toISOString()
+    });
+    
+    // 首先保存到本地存储（主要存储方式）
+    localStorage.setItem('favoriteTarotCards', JSON.stringify(favoritesArray));
+    console.log('Favorites saved to localStorage:', favoritesArray);
+    
+    // 然后尝试保存到 Firebase（备份和同步）
     if (user) {
-      // 用户已登录，保存到 Firebase
       try {
+        console.log('Syncing to Firebase for user:', user.uid);
         const userDoc = doc(db, 'users', user.uid);
         await setDoc(userDoc, {
           favorites: favoritesArray,
           updatedAt: new Date().toISOString()
         }, { merge: true });
+        console.log('Favorites synced to Firebase successfully');
       } catch (error) {
-        console.error('Error saving favorites to Firebase:', error);
+        console.error('Error syncing favorites to Firebase:', error);
+        // Firebase 同步失败不影响用户体验，因为本地存储已经保存
+        console.log('Local storage is up to date, Firebase sync failed');
       }
-    } else {
-      // 用户未登录，保存到本地存储
-      localStorage.setItem('favoriteTarotCards', JSON.stringify(favoritesArray));
     }
   };
 
@@ -127,9 +163,13 @@ const App: React.FC = () => {
 
   // 当收藏变化时保存
   useEffect(() => {
-    if (!loading) {
-      saveFavorites();
-    }
+    const handleSaveFavorites = async () => {
+      if (!loading) {
+        await saveFavorites();
+      }
+    };
+    
+    handleSaveFavorites();
   }, [favoriteCards, user, loading]);
 
   // 检查卡牌是否被收藏
