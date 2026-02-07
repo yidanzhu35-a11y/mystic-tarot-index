@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CardCategory, FilterType } from '../types';
-import { Search, Menu, Heart, LogIn, LogOut, User } from 'lucide-react';
+import { Search, Menu, Heart, LogIn, LogOut, User, X, Check } from 'lucide-react';
 import { auth } from '../firebase';
 
 interface HeaderProps {
@@ -22,13 +22,27 @@ const Header: React.FC<HeaderProps> = ({
   onOpenAuth,
   user
 }) => {
-  // 处理登出
-  const handleLogout = async () => {
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  // 处理登出确认
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  // 确认登出
+  const confirmLogout = async () => {
     try {
       await auth.signOut();
+      setShowLogoutConfirm(false);
     } catch (error) {
       console.error('Error signing out:', error);
+      setShowLogoutConfirm(false);
     }
+  };
+
+  // 取消登出
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
   };
   const categories = ['ALL', ...Object.values(CardCategory), 'FAVORITES'];
 
@@ -118,6 +132,45 @@ const Header: React.FC<HeaderProps> = ({
           })}
         </div>
       </div>
+
+      {/* 退出确认弹窗 */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* 背景 */}
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={cancelLogout}
+          ></div>
+
+          {/* 弹窗内容 */}
+          <div className="relative z-10 bg-[#1F204A] border border-mystic-gold/30 w-full max-w-sm rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <h3 className="text-xl font-serif text-mystic-gold mb-4 text-center">
+                确认退出
+              </h3>
+              <p className="text-gray-300 text-center mb-6">
+                确定要退出登录吗？
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={cancelLogout}
+                  className="flex-1 py-2 bg-transparent border border-mystic-gold/30 rounded text-mystic-gold hover:bg-mystic-gold/10 transition-colors flex items-center justify-center gap-2"
+                >
+                  <X size={16} />
+                  取消
+                </button>
+                <button
+                  onClick={confirmLogout}
+                  className="flex-1 py-2 bg-red-900/30 border border-red-500/30 rounded text-mystic-gold hover:bg-red-900/40 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Check size={16} />
+                  确认
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
