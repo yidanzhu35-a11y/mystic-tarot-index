@@ -8,17 +8,23 @@ interface CardModalProps {
   onClose: () => void;
   onToggleFavorite?: () => void;
   isFavorite: boolean;
+  note: string;
+  onNoteChange: (note: string) => void;
+  onSaveNote: () => void;
+  isSavingNote: boolean;
+  user: any;
 }
 
-const TABS: { id: TabType; label: string }[] = [
+const TABS: { id: TabType | 'notes'; label: string }[] = [
   { id: 'love', label: '❤️ 感情' },
   { id: 'career', label: '⚔️ 事业' },
   { id: 'wealth', label: '🪙 财富' },
   { id: 'growth', label: '✨ 成长' },
+  { id: 'notes', label: '📝 笔记' },
 ];
 
-const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFavorite, isFavorite }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('love');
+const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFavorite, isFavorite, note, onNoteChange, onSaveNote, isSavingNote, user }) => {
+  const [activeTab, setActiveTab] = useState<TabType | 'notes'>('love');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +41,7 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFa
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
       
-      const tabIds: TabType[] = ['love', 'career', 'wealth', 'growth'];
+      const tabIds: (TabType | 'notes')[] = ['love', 'career', 'wealth', 'growth', 'notes'];
       const currentIndex = tabIds.indexOf(activeTab);
       
       if (e.key === 'ArrowLeft') {
@@ -54,13 +60,13 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFa
   }, [isOpen, activeTab]);
 
   // Handle tab navigation
-  const handleTabChange = (tabId: TabType) => {
+  const handleTabChange = (tabId: TabType | 'notes') => {
     setActiveTab(tabId);
   };
 
   // Handle arrow click navigation
   const handleArrowClick = (direction: 'left' | 'right') => {
-    const tabIds: TabType[] = ['love', 'career', 'wealth', 'growth'];
+    const tabIds: (TabType | 'notes')[] = ['love', 'career', 'wealth', 'growth', 'notes'];
     const currentIndex = tabIds.indexOf(activeTab);
     
     if (direction === 'left') {
@@ -152,7 +158,7 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFa
             </button>
             
             {/* Tab Buttons */}
-            <div className="flex space-x-6 flex-1 justify-center">
+            <div className="flex space-x-4 md:space-x-6 flex-1 justify-center">
               {TABS.map((tab) => (
                 <button
                   key={tab.id}
@@ -182,42 +188,65 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFa
             </button>
           </div>
 
-          {/* Interpretations List */}
+          {/* Content Area - Interpretations or Notes */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-            {card.interpretations[activeTab].map((text, idx) => (
-              <div 
-                key={idx} 
-                className="group bg-[#2A2B55] p-4 rounded border border-transparent hover:border-mystic-gold/20 transition-all duration-300"
-              >
-                <div className="flex justify-between items-start gap-4">
-                  <p className="text-gray-200 font-light leading-relaxed text-sm md:text-base">
-                    <span className="font-bold text-mystic-gold">
-                      {idx === 0 ? '现状：' : idx === 1 ? '建议：' : '未来：'}
-                    </span>
-                    {text}
-                  </p>
-                  <button
-                    onClick={() => handleCopy(text, idx)}
-                    className="shrink-0 text-mystic-gold/40 hover:text-mystic-gold transition-colors p-1"
-                    title="复制这段解读"
-                  >
-                    {copiedIndex === idx ? <Check size={16} /> : <Copy size={16} />}
-                  </button>
-                </div>
+            {/* Notes Tab Content */}
+            {activeTab === 'notes' ? (
+              <div className="space-y-3">
+                <textarea
+                  value={note}
+                  onChange={(e) => onNoteChange(e.target.value)}
+                  placeholder="在这里记录你的个人感悟和解读..."
+                  className="w-full bg-[#2A2B55] border border-mystic-gold/20 rounded p-3 text-gray-200 text-sm font-light leading-relaxed resize-none min-h-[200px] focus:outline-none focus:border-mystic-gold/50 transition-colors"
+                  rows={6}
+                />
+                <button
+                  onClick={onSaveNote}
+                  disabled={isSavingNote || !user}
+                  className="w-full py-2 bg-gradient-to-r from-mystic-gold/20 to-mystic-gold/10 border border-mystic-gold/30 rounded text-mystic-gold text-sm font-serif tracking-wide hover:bg-gradient-to-r from-mystic-gold/30 to-mystic-gold/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSavingNote ? '保存中...' : !user ? '未登录，无法保存' : '保存笔记'}
+                </button>
               </div>
-            ))}
-            
-             <div className="pt-4 flex justify-center">
-                 <button 
-                   onClick={() => {
-                     const allText = card.interpretations[activeTab].join('\n');
-                     handleCopy(allText, 999);
-                   }}
-                   className="text-xs text-mystic-gold/50 hover:text-mystic-gold underline underline-offset-4 transition-colors font-serif"
-                 >
-                   {copiedIndex === 999 ? '已复制全部' : '复制本页所有解读'}
-                 </button>
-             </div>
+            ) : (
+              /* Interpretations Tab Content */
+              <>
+                {card.interpretations[activeTab as TabType].map((text, idx) => (
+                  <div 
+                    key={idx} 
+                    className="group bg-[#2A2B55] p-4 rounded border border-transparent hover:border-mystic-gold/20 transition-all duration-300"
+                  >
+                    <div className="flex justify-between items-start gap-4">
+                      <p className="text-gray-200 font-light leading-relaxed text-sm md:text-base">
+                        <span className="font-bold text-mystic-gold">
+                          {idx === 0 ? '现状：' : idx === 1 ? '建议：' : '未来：'}
+                        </span>
+                        {text}
+                      </p>
+                      <button
+                        onClick={() => handleCopy(text, idx)}
+                        className="shrink-0 text-mystic-gold/40 hover:text-mystic-gold transition-colors p-1"
+                        title="复制这段解读"
+                      >
+                        {copiedIndex === idx ? <Check size={16} /> : <Copy size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                
+                 <div className="pt-4 flex justify-center">
+                     <button 
+                       onClick={() => {
+                         const allText = card.interpretations[activeTab as TabType].join('\n');
+                         handleCopy(allText, 999);
+                       }}
+                       className="text-xs text-mystic-gold/50 hover:text-mystic-gold underline underline-offset-4 transition-colors font-serif"
+                     >
+                       {copiedIndex === 999 ? '已复制全部' : '复制本页所有解读'}
+                     </button>
+                 </div>
+              </>
+            )}
           </div>
         </div>
       </div>

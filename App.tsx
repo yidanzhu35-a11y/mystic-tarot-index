@@ -18,6 +18,9 @@ const App: React.FC = () => {
   const [favoriteCards, setFavoriteCards] = useState<Set<number>>(new Set());
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [currentNote, setCurrentNote] = useState('');
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [notes, setNotes] = useState<Record<number, string>>({});
 
   // 监听认证状态变化
   useEffect(() => {
@@ -32,13 +35,15 @@ const App: React.FC = () => {
       
       // 首先总是从本地存储加载，确保快速响应
       loadFavoritesFromLocalStorage();
-      console.log('Initial favorites loaded from localStorage');
+      loadNotesFromLocalStorage();
+      console.log('Initial data loaded from localStorage');
       
       // 然后如果用户已登录，尝试与 Firebase 同步
       if (currentUser) {
         console.log('User logged in, syncing with Firebase:', currentUser.uid);
         // 从 Firebase 加载数据（如果有新数据）
         await loadFavoritesFromFirebase(currentUser.uid);
+        await loadNotesFromFirebase(currentUser.uid);
         // 确保本地数据同步到 Firebase
         await saveFavorites();
       }
@@ -177,6 +182,97 @@ const App: React.FC = () => {
     return favoriteCards.has(cardId);
   };
 
+  // 从本地存储加载笔记
+  const loadNotesFromLocalStorage = () => {
+    const savedNotes = localStorage.getItem('tarotCardNotes');
+    if (savedNotes) {
+      try {
+        const parsedNotes = JSON.parse(savedNotes);
+        console.log('Notes loaded from localStorage:', parsedNotes);
+        setNotes(parsedNotes);
+      } catch (error) {
+        console.error('Error loading notes from localStorage:', error);
+        setNotes({});
+      }
+    }
+  };
+
+  // 从 Firebase 加载笔记
+  const loadNotesFromFirebase = async (userId: string) => {
+    console.log('Loading notes from Firebase for user:', userId);
+    try {
+      const userDoc = doc(db, 'users', userId);
+      const userSnapshot = await getDoc(userDoc);
+      
+      console.log('Firebase document exists:', userSnapshot.exists());
+      
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.data();
+        console.log('Firebase user data:', userData);
+        const userNotes = userData.notes || {};
+        console.log('Notes from Firebase:', userNotes);
+        
+        // 如果 Firebase 中有笔记数据，更新本地存储和状态
+        if (Object.keys(userNotes).length > 0) {
+          setNotes(userNotes);
+          localStorage.setItem('tarotCardNotes', JSON.stringify(userNotes));
+          console.log('Notes synced from Firebase to localStorage');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading notes from Firebase:', error);
+      // 加载失败，使用本地存储中的数据
+      console.log('Using localStorage notes as backup');
+    }
+  };
+
+  // 保存笔记到本地存储和 Firebase
+  const saveNote = async (cardId: number, note: string) => {
+    console.log('Saving note:', {
+      cardId,
+      note: note.substring(0, 100) + (note.length > 100 ? '...' : ''),
+      user: user ? 'logged in' : 'not logged in',
+      timestamp: new Date().toISOString()
+    });
+    
+    // 更新本地笔记状态
+    const updatedNotes = {
+      ...notes,
+      [cardId]: note
+    };
+    setNotes(updatedNotes);
+    
+    // 保存到本地存储
+    localStorage.setItem('tarotCardNotes', JSON.stringify(updatedNotes));
+    console.log('Note saved to localStorage:', { cardId, noteLength: note.length });
+    
+    // 尝试保存到 Firebase
+    if (user) {
+      try {
+        console.log('Syncing note to Firebase for user:', user.uid);
+        const userDoc = doc(db, 'users', user.uid);
+        await setDoc(userDoc, {
+          notes: updatedNotes,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        console.log('Note synced to Firebase successfully');
+      } catch (error) {
+        console.error('Error syncing note to Firebase:', error);
+        // Firebase 同步失败不影响用户体验
+        console.log('Local storage is up to date, Firebase sync failed');
+      }
+    }
+  };
+
+  // 当选择卡牌变化时，加载对应的笔记
+  useEffect(() => {
+    if (selectedCard) {
+      const cardNote = notes[selectedCard.id] || '';
+      setCurrentNote(cardNote);
+      console.log('Loaded note for card:', { cardId: selectedCard.id, noteLength: cardNote.length });
+    }
+  }, [selectedCard, notes]);
+
   return (
     <div className="min-h-screen bg-mystic-bg pb-20">
       
@@ -249,6 +345,14 @@ const App: React.FC = () => {
         onClose={() => setSelectedCard(null)} 
         onToggleFavorite={selectedCard ? () => toggleFavorite(selectedCard.id) : undefined}
         isFavorite={selectedCard ? isFavorite(selectedCard.id) : false}
+        note={currentNote}
+        onNoteChange={setCurrentNote}
+        onSaveNote={selectedCard ? () => {
+          setIsSavingNote(true);
+          saveNote(selectedCard.id, currentNote).finally(() => setIsSavingNote(false));
+        } : undefined}
+        isSavingNote={isSavingNote}
+        user={user}
       />
       
       <AboutModal 

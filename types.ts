@@ -27,3 +27,6 @@ export type TabType = 'love' | 'career' | 'wealth' | 'growth';
 
 // 筛选状态类型
 export type FilterType = CardCategory | 'ALL' | 'FAVORITES';
+
+// 笔记类型
+export type Notes = Record<number, string>;
