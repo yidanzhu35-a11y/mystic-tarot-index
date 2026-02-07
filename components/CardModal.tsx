@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TarotCard, TabType } from '../types';
-import { X, Copy, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Copy, Check, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 
 interface CardModalProps {
   card: TarotCard | null;
   isOpen: boolean;
   onClose: () => void;
+  onToggleFavorite?: () => void;
+  isFavorite: boolean;
 }
 
 const TABS: { id: TabType; label: string }[] = [
@@ -15,7 +17,7 @@ const TABS: { id: TabType; label: string }[] = [
   { id: 'growth', label: '✨ 成长' },
 ];
 
-const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose }) => {
+const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFavorite, isFavorite }) => {
   const [activeTab, setActiveTab] = useState<TabType>('love');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -116,7 +118,18 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose }) => {
              <div className="flex justify-between items-start">
                <div>
                   <h3 className="text-mystic-gold/60 text-sm font-serif tracking-widest uppercase mb-1">{card.category}</h3>
-                  <h2 className="text-3xl font-serif text-mystic-gold mb-3">{card.name}</h2>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-3xl font-serif text-mystic-gold mb-3">{card.name}</h2>
+                    {onToggleFavorite && (
+                      <button
+                        onClick={onToggleFavorite}
+                        className={`p-1 transition-all duration-300 ${isFavorite ? 'text-red-400 scale-110' : 'text-mystic-gold/40 hover:text-mystic-gold'}`}
+                        title={isFavorite ? '移除收藏' : '添加收藏'}
+                      >
+                        <Heart size={24} fill={isFavorite ? 'currentColor' : 'none'} />
+                      </button>
+                    )}
+                  </div>
                </div>
                <button onClick={onClose} className="hidden md:block text-mystic-gold/60 hover:text-mystic-gold transition-colors">
                  <X size={28} />

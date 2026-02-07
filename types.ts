@@ -24,3 +24,6 @@ export interface TarotCard {
 }
 
 export type TabType = 'love' | 'career' | 'wealth' | 'growth';
+
+// 筛选状态类型
+export type FilterType = CardCategory | 'ALL' | 'FAVORITES';
