@@ -31,43 +31,27 @@ const App: React.FC = () => {
       });
       
       setUser(currentUser);
-      setLoading(false);
       
-      // 首先总是从本地存储加载，确保快速响应
-      loadFavoritesFromLocalStorage();
-      loadNotesFromLocalStorage();
-      console.log('Initial data loaded from localStorage');
-      
-      // 然后如果用户已登录，尝试与 Firebase 同步
+      // 如果用户已登录，从 Firebase 加载数据
       if (currentUser) {
-        console.log('User logged in, syncing with Firebase:', currentUser.uid);
-        // 从 Firebase 加载数据（如果有新数据）
+        console.log('User logged in, loading from Firebase:', currentUser.uid);
         await loadFavoritesFromFirebase(currentUser.uid);
         await loadNotesFromFirebase(currentUser.uid);
-        // 确保本地数据同步到 Firebase
-        await saveFavorites();
+      } else {
+        // 用户未登录，清空数据
+        setFavoriteCards(new Set());
+        setNotes({});
       }
+      
+      setLoading(false);
     });
 
     return unsubscribe;
   }, []);
 
-  // 从本地存储加载收藏（优先使用）
-  const loadFavoritesFromLocalStorage = () => {
-    const savedFavorites = localStorage.getItem('favoriteTarotCards');
-    if (savedFavorites) {
-      try {
-        const parsedFavorites = JSON.parse(savedFavorites);
-        console.log('Favorites loaded from localStorage:', parsedFavorites);
-        setFavoriteCards(new Set(parsedFavorites));
-      } catch (error) {
-        console.error('Error loading favorites from localStorage:', error);
-        setFavoriteCards(new Set());
-      }
-    }
-  };
 
-  // 从 Firebase 加载收藏（作为备份和同步）
+
+  // 从 Firebase 加载收藏
   const loadFavoritesFromFirebase = async (userId: string) => {
     console.log('Loading favorites from Firebase for user:', userId);
     try {
@@ -82,30 +66,28 @@ const App: React.FC = () => {
         const favorites = userData.favorites || [];
         console.log('Favorites from Firebase:', favorites);
         
-        // 如果 Firebase 中有数据，更新本地存储和状态
-        if (favorites.length > 0) {
-          setFavoriteCards(new Set(favorites));
-          localStorage.setItem('favoriteTarotCards', JSON.stringify(favorites));
-          console.log('Favorites synced from Firebase to localStorage');
-        }
+        // 更新状态
+        setFavoriteCards(new Set(favorites));
+        console.log('Favorites loaded from Firebase');
       } else {
         // 用户文档不存在，创建新文档
         console.log('Creating new user document');
-        const currentFavorites = Array.from(favoriteCards);
         await setDoc(userDoc, {
-          favorites: currentFavorites,
+          favorites: [],
+          notes: {},
           createdAt: new Date().toISOString()
         });
-        console.log('New user document created with current favorites:', currentFavorites);
+        console.log('New user document created');
+        setFavoriteCards(new Set());
       }
     } catch (error) {
       console.error('Error loading favorites from Firebase:', error);
-      // 加载失败，使用本地存储中的数据
-      console.log('Using localStorage data as backup');
+      // 加载失败，清空收藏
+      setFavoriteCards(new Set());
     }
   };
 
-  // 保存收藏到本地存储和 Firebase（本地优先）
+  // 保存收藏到 Firebase
   const saveFavorites = async () => {
     const favoritesArray = Array.from(favoriteCards);
     
@@ -115,24 +97,18 @@ const App: React.FC = () => {
       timestamp: new Date().toISOString()
     });
     
-    // 首先保存到本地存储（主要存储方式）
-    localStorage.setItem('favoriteTarotCards', JSON.stringify(favoritesArray));
-    console.log('Favorites saved to localStorage:', favoritesArray);
-    
-    // 然后尝试保存到 Firebase（备份和同步）
+    // 只保存到 Firebase
     if (user) {
       try {
-        console.log('Syncing to Firebase for user:', user.uid);
+        console.log('Saving to Firebase for user:', user.uid);
         const userDoc = doc(db, 'users', user.uid);
         await setDoc(userDoc, {
           favorites: favoritesArray,
           updatedAt: new Date().toISOString()
         }, { merge: true });
-        console.log('Favorites synced to Firebase successfully');
+        console.log('Favorites saved to Firebase successfully');
       } catch (error) {
-        console.error('Error syncing favorites to Firebase:', error);
-        // Firebase 同步失败不影响用户体验，因为本地存储已经保存
-        console.log('Local storage is up to date, Firebase sync failed');
+        console.error('Error saving favorites to Firebase:', error);
       }
     }
   };
@@ -182,20 +158,7 @@ const App: React.FC = () => {
     return favoriteCards.has(cardId);
   };
 
-  // 从本地存储加载笔记
-  const loadNotesFromLocalStorage = () => {
-    const savedNotes = localStorage.getItem('tarotCardNotes');
-    if (savedNotes) {
-      try {
-        const parsedNotes = JSON.parse(savedNotes);
-        console.log('Notes loaded from localStorage:', parsedNotes);
-        setNotes(parsedNotes);
-      } catch (error) {
-        console.error('Error loading notes from localStorage:', error);
-        setNotes({});
-      }
-    }
-  };
+
 
   // 从 Firebase 加载笔记
   const loadNotesFromFirebase = async (userId: string) => {
@@ -212,21 +175,18 @@ const App: React.FC = () => {
         const userNotes = userData.notes || {};
         console.log('Notes from Firebase:', userNotes);
         
-        // 如果 Firebase 中有笔记数据，更新本地存储和状态
-        if (Object.keys(userNotes).length > 0) {
-          setNotes(userNotes);
-          localStorage.setItem('tarotCardNotes', JSON.stringify(userNotes));
-          console.log('Notes synced from Firebase to localStorage');
-        }
+        // 更新状态
+        setNotes(userNotes);
+        console.log('Notes loaded from Firebase');
       }
     } catch (error) {
       console.error('Error loading notes from Firebase:', error);
-      // 加载失败，使用本地存储中的数据
-      console.log('Using localStorage notes as backup');
+      // 加载失败，清空笔记
+      setNotes({});
     }
   };
 
-  // 保存笔记到本地存储和 Firebase
+  // 保存笔记到 Firebase
   const saveNote = async (cardId: number, note: string) => {
     console.log('Saving note:', {
       cardId,
@@ -242,24 +202,20 @@ const App: React.FC = () => {
     };
     setNotes(updatedNotes);
     
-    // 保存到本地存储
-    localStorage.setItem('tarotCardNotes', JSON.stringify(updatedNotes));
-    console.log('Note saved to localStorage:', { cardId, noteLength: note.length });
-    
-    // 尝试保存到 Firebase
+    // 只保存到 Firebase
     if (user) {
       try {
-        console.log('Syncing note to Firebase for user:', user.uid);
+        console.log('Saving note to Firebase for user:', user.uid);
         const userDoc = doc(db, 'users', user.uid);
         await setDoc(userDoc, {
           notes: updatedNotes,
           updatedAt: new Date().toISOString()
         }, { merge: true });
-        console.log('Note synced to Firebase successfully');
+        console.log('Note saved to Firebase successfully');
       } catch (error) {
-        console.error('Error syncing note to Firebase:', error);
-        // Firebase 同步失败不影响用户体验
-        console.log('Local storage is up to date, Firebase sync failed');
+        console.error('Error saving note to Firebase:', error);
+        // 保存失败，恢复之前的笔记状态
+        console.log('Restoring previous notes state');
       }
     }
   };
