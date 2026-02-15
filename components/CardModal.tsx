@@ -13,6 +13,7 @@ interface CardModalProps {
   onSaveNote: () => void;
   isSavingNote: boolean;
   user: any;
+  defaultTab?: TabType | 'notes';
 }
 
 const TABS: { id: TabType | 'notes'; label: string }[] = [
@@ -23,18 +24,18 @@ const TABS: { id: TabType | 'notes'; label: string }[] = [
   { id: 'notes', label: '📝 笔记' },
 ];
 
-const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFavorite, isFavorite, note, onNoteChange, onSaveNote, isSavingNote, user }) => {
-  const [activeTab, setActiveTab] = useState<TabType | 'notes'>('love');
+const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFavorite, isFavorite, note, onNoteChange, onSaveNote, isSavingNote, user, defaultTab }) => {
+  const [activeTab, setActiveTab] = useState<TabType | 'notes'>(defaultTab || 'love');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
-      setActiveTab('love');
+      setActiveTab(defaultTab || 'love');
       setCopiedIndex(null);
     }
-  }, [isOpen, card]);
+  }, [isOpen, card, defaultTab]);
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -197,7 +198,7 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFa
                   value={note}
                   onChange={(e) => onNoteChange(e.target.value)}
                   placeholder="在这里记录你的个人感悟和解读..."
-                  className="w-full bg-[#2A2B55] border border-mystic-gold/20 rounded p-3 text-gray-200 text-sm font-light leading-relaxed resize-none min-h-[200px] focus:outline-none focus:border-mystic-gold/50 transition-colors"
+                  className="w-full bg-[#2A2B55] border border-mystic-gold/20 rounded p-3 text-gray-200 text-sm leading-relaxed resize-none min-h-[200px] focus:outline-none focus:border-mystic-gold/50 transition-colors"
                   rows={6}
                 />
                 <button

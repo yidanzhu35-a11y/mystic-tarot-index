@@ -4,6 +4,10 @@ import { Search, Menu, Heart, LogIn, LogOut, User, X, Check } from 'lucide-react
 import { auth } from '../firebase';
 
 interface HeaderProps {
+  activeView: 'search' | 'notes';
+  setActiveView: (view: 'search' | 'notes') => void;
+  notesTab: 'cards' | 'spreads';
+  setNotesTab: (tab: 'cards' | 'spreads') => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   activeFilter: FilterType;
@@ -14,6 +18,10 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ 
+  activeView,
+  setActiveView,
+  notesTab,
+  setNotesTab,
   searchTerm, 
   setSearchTerm, 
   activeFilter, 
@@ -50,25 +58,81 @@ const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 bg-mystic-bg/95 backdrop-blur-md border-b border-mystic-gold/20 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 py-4">
         
-        {/* Title and Slogan */}
-        <div className="text-center mb-3">
-          <h1 className="text-4xl font-serif text-mystic-gold mb-1">随身塔罗</h1>
-          <p className="text-sm text-mystic-gold/70 font-sans">牌意百科，一秒读懂</p>
+        {/* Title */}
+        <div className="text-center mb-4">
+          <h1 className="text-4xl font-serif text-mystic-gold">随身塔罗</h1>
         </div>
-        
+
+        {/* Main Tabs */}
+        <div className="flex justify-center mb-4">
+          <div className="flex bg-[#1F204A] border border-mystic-gold/20 rounded-lg p-1">
+            <button
+              onClick={() => setActiveView('search')}
+              className={`px-8 py-2 rounded-md font-serif transition-all duration-200 ${
+                activeView === 'search'
+                  ? 'bg-mystic-gold/20 text-mystic-gold font-bold'
+                  : 'text-mystic-gold/50 hover:text-mystic-gold/70'
+              }`}
+            >
+              牌意百科
+            </button>
+            <button
+              onClick={() => setActiveView('notes')}
+              className={`px-8 py-2 rounded-md font-serif transition-all duration-200 ${
+                activeView === 'notes'
+                  ? 'bg-mystic-gold/20 text-mystic-gold font-bold'
+                  : 'text-mystic-gold/50 hover:text-mystic-gold/70'
+              }`}
+            >
+              灵感手札
+            </button>
+          </div>
+        </div>
+
         {/* Top Row: Search & About */}
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div className="relative flex-1 max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-mystic-gold" />
-            </div>
-            <input
-              type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-mystic-gold/30 rounded-md leading-5 bg-mystic-bg text-mystic-gold-light placeholder-mystic-gold/50 focus:outline-none focus:border-mystic-gold focus:ring-1 focus:ring-mystic-gold sm:text-sm transition-colors"
-              placeholder="搜索牌名..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1 max-w-md">
+            {activeView === 'search' ? (
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-mystic-gold" />
+                </div>
+                <input
+                  type="text"
+                  className="block w-full pl-10 pr-3 py-2 border border-mystic-gold/30 rounded-md leading-5 bg-mystic-bg text-mystic-gold-light placeholder-mystic-gold/50 focus:outline-none focus:border-mystic-gold focus:ring-1 focus:ring-mystic-gold sm:text-sm transition-colors"
+                  placeholder="搜索牌名..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            ) : (
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setNotesTab('cards')}
+                  className={`
+                    whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-serif border transition-all duration-200
+                    ${notesTab === 'cards'
+                      ? 'bg-mystic-gold text-mystic-bg border-mystic-gold font-bold shadow-[0_0_10px_rgba(212,175,55,0.3)]'
+                      : 'bg-transparent text-mystic-gold/70 border-mystic-gold/30 hover:border-mystic-gold hover:text-mystic-gold'
+                    }
+                  `}
+                >
+                  单牌笔记
+                </button>
+                <button
+                  onClick={() => setNotesTab('spreads')}
+                  className={`
+                    whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-serif border transition-all duration-200
+                    ${notesTab === 'spreads'
+                      ? 'bg-mystic-gold text-mystic-bg border-mystic-gold font-bold shadow-[0_0_10px_rgba(212,175,55,0.3)]'
+                      : 'bg-transparent text-mystic-gold/70 border-mystic-gold/30 hover:border-mystic-gold hover:text-mystic-gold'
+                    }
+                  `}
+                >
+                  牌阵笔记
+                </button>
+              </div>
+            )}
           </div>
           
           <div className="flex items-center gap-2">
@@ -100,37 +164,39 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Bottom Row: Filters (Scrollable on mobile) */}
-        <div className="flex space-x-2 overflow-x-auto pb-1 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-start">
-          {categories.map((cat) => {
-            const isActive = activeFilter === cat;
-            let label = cat === 'ALL' ? '全部' : cat === 'FAVORITES' ? '收藏' : cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => setActiveFilter(cat as FilterType)}
-                className={`
-                  whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-serif border transition-all duration-200
-                  ${isActive 
-                    ? cat === 'FAVORITES' 
-                      ? 'bg-red-500 text-white border-red-500 font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)]'
-                      : 'bg-mystic-gold text-mystic-bg border-mystic-gold font-bold shadow-[0_0_10px_rgba(212,175,55,0.3)]'
-                    : cat === 'FAVORITES'
-                      ? 'bg-transparent text-red-400 border-red-400/30 hover:border-red-400 hover:text-red-300'
-                      : 'bg-transparent text-mystic-gold/70 border-mystic-gold/30 hover:border-mystic-gold hover:text-mystic-gold'}
-                `}
-              >
-                {cat === 'FAVORITES' ? (
-                  <div className="flex items-center gap-1.5">
-                    <Heart size={14} fill={isActive ? 'currentColor' : 'none'} />
-                    <span>{label}</span>
-                  </div>
-                ) : (
-                  label
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {activeView === 'search' && (
+          <div className="flex space-x-2 overflow-x-auto pb-1 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:justify-start mt-4">
+            {categories.map((cat) => {
+              const isActive = activeFilter === cat;
+              let label = cat === 'ALL' ? '全部' : cat === 'FAVORITES' ? '收藏' : cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveFilter(cat as FilterType)}
+                  className={`
+                    whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-serif border transition-all duration-200
+                    ${isActive 
+                      ? cat === 'FAVORITES' 
+                        ? 'bg-red-500 text-white border-red-500 font-bold shadow-[0_0_10px_rgba(239,68,68,0.3)]'
+                        : 'bg-mystic-gold text-mystic-bg border-mystic-gold font-bold shadow-[0_0_10px_rgba(212,175,55,0.3)]'
+                      : cat === 'FAVORITES'
+                        ? 'bg-transparent text-red-400 border-red-400/30 hover:border-red-400 hover:text-red-300'
+                        : 'bg-transparent text-mystic-gold/70 border-mystic-gold/30 hover:border-mystic-gold hover:text-mystic-gold'}
+                  `}
+                >
+                  {cat === 'FAVORITES' ? (
+                    <div className="flex items-center gap-1.5">
+                      <Heart size={14} fill={isActive ? 'currentColor' : 'none'} />
+                      <span>{label}</span>
+                    </div>
+                  ) : (
+                    label
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* 退出确认弹窗 */}
