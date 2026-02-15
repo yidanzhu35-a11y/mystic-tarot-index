@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TarotCard, SpreadCard, SpreadRecord } from '../types';
 import { TAROT_DECK } from '../constants';
 import { ArrowLeft, Plus, X, RotateCcw, Save, Trash2, Search } from 'lucide-react';
@@ -15,9 +15,15 @@ const SpreadEditPage: React.FC<SpreadEditPageProps> = ({ spread, onBack, onSave 
   const [clientName, setClientName] = useState('');
   const [cards, setCards] = useState<SpreadCard[]>([]);
   const [interpretation, setInterpretation] = useState('');
+  const [summary, setSummary] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [showCardSelector, setShowCardSelector] = useState<string | null>(null);
   const [cardSearchTerm, setCardSearchTerm] = useState('');
+  const questionTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const interpretationTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const summaryTextareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  const [originalData, setOriginalData] = useState<any>(null);
 
   useEffect(() => {
     if (spread) {
@@ -26,12 +32,51 @@ const SpreadEditPage: React.FC<SpreadEditPageProps> = ({ spread, onBack, onSave 
       setClientName(spread.clientName || '');
       setCards(spread.cards);
       setInterpretation(spread.interpretation);
+      setSummary(spread.summary || '');
+      setOriginalData({
+        question: spread.question,
+        date: spread.date.split('T')[0],
+        clientName: spread.clientName || '',
+        cards: spread.cards,
+        interpretation: spread.interpretation,
+        summary: spread.summary || ''
+      });
     } else {
       const today = new Date().toISOString().split('T')[0];
       setDate(today);
       setCards([createNewSpreadCard()]);
+      setOriginalData({
+        question: '',
+        date: today,
+        clientName: '',
+        cards: [createNewSpreadCard()],
+        interpretation: '',
+        summary: ''
+      });
     }
   }, [spread]);
+
+  const hasUnsavedChanges = () => {
+    if (!originalData) return false;
+    return (
+      question !== originalData.question ||
+      date !== originalData.date ||
+      clientName !== originalData.clientName ||
+      interpretation !== originalData.interpretation ||
+      summary !== originalData.summary ||
+      JSON.stringify(cards) !== JSON.stringify(originalData.cards)
+    );
+  };
+
+  const handleBack = () => {
+    if (hasUnsavedChanges()) {
+      if (confirm('你有未保存的内容，确定要离开吗？')) {
+        onBack();
+      }
+    } else {
+      onBack();
+    }
+  };
 
   const createNewSpreadCard = (): SpreadCard => {
     return {
@@ -74,6 +119,7 @@ const SpreadEditPage: React.FC<SpreadEditPageProps> = ({ spread, onBack, onSave 
       clientName,
       cards: cards.filter(c => c.cardId !== -1),
       interpretation,
+      summary,
       createdAt: spread?.createdAt || now,
       updatedAt: now
     };
@@ -81,6 +127,23 @@ const SpreadEditPage: React.FC<SpreadEditPageProps> = ({ spread, onBack, onSave 
     await onSave(spreadToSave);
     setIsSaving(false);
   };
+
+  const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
+
+  useEffect(() => {
+    if (questionTextareaRef.current) {
+      autoResizeTextarea(questionTextareaRef.current);
+    }
+    if (interpretationTextareaRef.current) {
+      autoResizeTextarea(interpretationTextareaRef.current);
+    }
+    if (summaryTextareaRef.current) {
+      autoResizeTextarea(summaryTextareaRef.current);
+    }
+  }, [question, interpretation, summary]);
 
   const filteredCards = TAROT_DECK.filter(card => 
     card.name.includes(cardSearchTerm)
@@ -97,7 +160,7 @@ const SpreadEditPage: React.FC<SpreadEditPageProps> = ({ spread, onBack, onSave 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={onBack}
+                onClick={handleBack}
                 className="p-2 rounded-full hover:bg-mystic-gold/10 text-mystic-gold transition-colors"
               >
                 <ArrowLeft size={20} />
@@ -125,34 +188,36 @@ const SpreadEditPage: React.FC<SpreadEditPageProps> = ({ spread, onBack, onSave 
           
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-mystic-gold/70 text-sm mb-2 font-serif">占卜日期</label>
+              <div className="flex items-center gap-3">
+                <label className="text-mystic-gold/70 text-sm font-serif w-20 flex-shrink-0">占卜日期</label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full bg-[#1F204A] border border-mystic-gold/20 rounded p-3 text-gray-200 text-sm focus:outline-none focus:border-mystic-gold/50 transition-colors"
+                  className="flex-1 bg-[#1F204A] border border-mystic-gold/20 rounded p-3 text-gray-200 text-sm focus:outline-none focus:border-mystic-gold/50 transition-colors"
                 />
               </div>
-              <div>
-                <label className="block text-mystic-gold/70 text-sm mb-2 font-serif">当事人称呼</label>
+              <div className="flex items-center gap-3">
+                <label className="text-mystic-gold/70 text-sm font-serif w-20 flex-shrink-0">当事人称呼</label>
                 <input
                   type="text"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   placeholder="请输入当事人称呼..."
-                  className="w-full bg-[#1F204A] border border-mystic-gold/20 rounded p-3 text-gray-200 text-sm focus:outline-none focus:border-mystic-gold/50 transition-colors"
+                  className="flex-1 bg-[#1F204A] border border-mystic-gold/20 rounded p-3 text-gray-200 text-sm focus:outline-none focus:border-mystic-gold/50 transition-colors"
                 />
               </div>
             </div>
             
-            <div>
-              <label className="block text-mystic-gold/70 text-sm mb-2 font-serif">占卜问题</label>
+            <div className="flex items-start gap-3">
+              <label className="text-mystic-gold/70 text-sm font-serif w-20 flex-shrink-0 pt-3">占卜问题</label>
               <textarea
+                ref={questionTextareaRef}
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="请输入当事人提出的问题..."
-                className="w-full bg-[#1F204A] border border-mystic-gold/20 rounded p-3 text-gray-200 text-sm leading-relaxed resize-none min-h-[80px] focus:outline-none focus:border-mystic-gold/50 transition-colors"
+                className="flex-1 bg-[#1F204A] border border-mystic-gold/20 rounded p-3 text-gray-200 text-sm leading-relaxed resize-none overflow-hidden focus:outline-none focus:border-mystic-gold/50 transition-colors"
+                rows={1}
               />
             </div>
           </div>
@@ -247,13 +312,26 @@ const SpreadEditPage: React.FC<SpreadEditPageProps> = ({ spread, onBack, onSave 
         </div>
 
         {/* 完整解读 */}
-        <div className="bg-[#2A2B55] border border-mystic-gold/20 rounded-lg p-6">
+        <div className="bg-[#2A2B55] border border-mystic-gold/20 rounded-lg p-6 mb-6">
           <h2 className="text-lg font-serif text-mystic-gold mb-4">完整解读</h2>
           <textarea
+            ref={interpretationTextareaRef}
             value={interpretation}
             onChange={(e) => setInterpretation(e.target.value)}
             placeholder="在这里记录对整个牌阵的完整解读..."
-            className="w-full bg-[#1F204A] border border-mystic-gold/20 rounded p-4 text-gray-200 text-sm leading-relaxed resize-none min-h-[200px] focus:outline-none focus:border-mystic-gold/50 transition-colors"
+            className="w-full bg-[#1F204A] border border-mystic-gold/20 rounded p-4 text-gray-200 text-sm leading-relaxed resize-none overflow-hidden min-h-[120px] focus:outline-none focus:border-mystic-gold/50 transition-colors"
+          />
+        </div>
+
+        {/* 总结复盘 */}
+        <div className="bg-[#2A2B55] border border-mystic-gold/20 rounded-lg p-6">
+          <h2 className="text-lg font-serif text-mystic-gold mb-4">总结复盘</h2>
+          <textarea
+            ref={summaryTextareaRef}
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            placeholder="在这里记录本次占卜的总结和复盘..."
+            className="w-full bg-[#1F204A] border border-mystic-gold/20 rounded p-4 text-gray-200 text-sm leading-relaxed resize-none overflow-hidden min-h-[80px] focus:outline-none focus:border-mystic-gold/50 transition-colors"
           />
         </div>
       </div>

@@ -47,6 +47,7 @@ export interface SpreadRecord {
   clientName: string; // 当事人称呼
   cards: SpreadCard[]; // 牌阵中的牌
   interpretation: string; // 完整解读
+  summary: string; // 总结复盘
   createdAt: string; // 创建时间
   updatedAt: string; // 更新时间
 }

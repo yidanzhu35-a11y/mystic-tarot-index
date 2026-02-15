@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Coffee } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -26,36 +26,42 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
 
         <h2 className="text-2xl font-serif text-mystic-gold mb-6 text-center">关于本站</h2>
         
-        <div className="space-y-4 text-gray-300 font-light leading-relaxed mb-8">
+        <div className="space-y-4 text-gray-300 font-light leading-relaxed">
           <p>
-            本站的目的是帮助塔罗初学者快速查阅和记忆牌意。这里有经典的韦特塔罗体系解读，涵盖感情、事业、财富、成长四个维度。
-          </p>
-          <p className="text-mystic-gold/80 italic">
-            请记住：本站解读仅供参考，直觉永远是我们最好的引路人。
+            Hi，欢迎打开随身塔罗～
           </p>
           <p>
-            祝大家未来都不再需要这里，开启属于你的塔罗叙事！
+            这是一个致力于为塔罗学习者提供帮助的网站。
           </p>
-        </div>
-
-        <div className="border-t border-mystic-gold/20 pt-6 flex flex-col items-center text-center">
-          <div className="bg-white p-2 rounded-lg mb-4">
-             {/* 赞赏码 */}
-             <img
-                src="/code.jpg"
-                alt="赞赏码"
-                className="w-32 h-32 object-contain"
-             />
+          <p>
+            在这里，你可以：
+          </p>
+          
+          <div className="pl-4 space-y-4">
+            <div>
+              <p className="text-mystic-gold font-bold mb-1">
+                1️⃣ 牌意百科，一秒读懂
+              </p>
+              <p className="text-sm">
+                这里有经典的韦特塔罗体系解读，涵盖感情、事业、财富、成长四个维度，帮助你快速掌握基础牌意。
+              </p>
+              <p className="text-sm text-mystic-gold/80 italic">
+                当然，所有解读仅供参考，请始终相信你自己的直觉。
+              </p>
+            </div>
+            
+            <div>
+              <p className="text-mystic-gold font-bold mb-1">
+                2️⃣ 灵感手札，常读常新
+              </p>
+              <p className="text-sm">
+                你可以在这里记录你对每张牌的独到理解，也可以写下每次占卜的提问与启示。让那些闪光的灵感与深沉的思考，都沉淀为你个人的智慧笔记。
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-mystic-gold mb-2 font-serif flex items-center justify-center gap-2">
-            <Coffee size={16} />
-            如果这个工具帮到了你
-          </p>
-          <p className="text-xs text-gray-400 mb-1">
-            欢迎请作者喝杯咖啡！
-          </p>
-          <p className="text-xs text-gray-400">
-            也欢迎➕vx交流：18258500632
+          
+          <p className="text-center mt-6 text-mystic-gold">
+            愿我们都能在学习塔罗的路上，见证自己的成长✨✨✨
           </p>
         </div>
       </div>
