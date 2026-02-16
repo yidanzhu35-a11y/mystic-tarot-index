@@ -28,7 +28,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         
         <div className="space-y-4 text-gray-300 font-light leading-relaxed">
           <p>
-            Hi，欢迎打开随身塔罗～
+            Hi，欢迎打开你的塔塔书～
           </p>
           <p>
             这是一个致力于为塔罗学习者提供帮助的网站。

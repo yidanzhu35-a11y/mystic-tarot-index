@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Firebase credentials (DO NOT COMMIT!)
+serviceAccountKey.json
+
+# Generated invite codes
+invites-generated.txt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

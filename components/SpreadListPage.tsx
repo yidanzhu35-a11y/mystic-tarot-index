@@ -9,15 +9,17 @@ interface SpreadListPageProps {
   onEditSpread: (spread: SpreadRecord) => void;
   onDeleteSpread: (id: string) => void;
   loading: boolean;
+  user: any;
 }
 
 const SpreadListPage: React.FC<SpreadListPageProps> = ({ 
   spreads, 
   onBack, 
   onNewSpread, 
-  onEditSpread, 
+  onEditSpread,
   onDeleteSpread,
-  loading 
+  loading,
+  user 
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -129,10 +131,15 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
             {/* 新建按钮 */}
             <button
               onClick={onNewSpread}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-mystic-gold/20 to-mystic-gold/10 border border-mystic-gold/30 rounded-lg text-mystic-gold font-serif hover:bg-gradient-to-r from-mystic-gold/30 to-mystic-gold/20 transition-all"
+              disabled={!user}
+              className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-serif transition-all ${
+                !user
+                  ? 'bg-gray-700/30 text-gray-500 border-gray-600/30 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-mystic-gold/20 to-mystic-gold/10 border-mystic-gold/30 text-mystic-gold hover:bg-gradient-to-r from-mystic-gold/30 to-mystic-gold/20'
+              }`}
             >
               <Plus size={18} />
-              <span>新建</span>
+              <span>{!user ? '未登录' : '新建'}</span>
             </button>
           </div>
         </div>
@@ -141,13 +148,18 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
         {spreads.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="text-6xl mb-4">✨</div>
-            <p className="text-mystic-gold/70 font-serif text-lg mb-6">等待你记录第一个牌阵</p>
+            <p className="text-mystic-gold/70 font-serif text-lg mb-6">{user ? '等待你记录第一个牌阵' : '登录后可以记录牌阵'}</p>
             <button
               onClick={onNewSpread}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-mystic-gold/20 to-mystic-gold/10 border border-mystic-gold/30 rounded-lg text-mystic-gold font-serif hover:bg-gradient-to-r from-mystic-gold/30 to-mystic-gold/20 transition-all"
+              disabled={!user}
+              className={`flex items-center gap-2 px-6 py-3 border rounded-lg font-serif transition-all ${
+                !user
+                  ? 'bg-gray-700/30 text-gray-500 border-gray-600/30 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-mystic-gold/20 to-mystic-gold/10 border-mystic-gold/30 text-mystic-gold hover:bg-gradient-to-r from-mystic-gold/30 to-mystic-gold/20'
+              }`}
             >
               <Plus size={20} />
-              <span>新建牌阵记录</span>
+              <span>{!user ? '未登录，无法记录' : '新建牌阵记录'}</span>
             </button>
           </div>
         ) : filteredSpreads.length === 0 ? (

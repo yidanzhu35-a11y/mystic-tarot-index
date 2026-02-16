@@ -432,6 +432,7 @@ const App: React.FC = () => {
                   }}
                   onDeleteSpread={deleteSpread}
                   loading={loading}
+                  user={user}
                 />
               )}
             </main>

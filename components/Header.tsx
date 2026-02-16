@@ -60,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({
         
         {/* Title */}
         <div className="text-center mb-4">
-          <h1 className="text-4xl font-serif text-mystic-gold">随身塔罗</h1>
+          <h1 className="text-4xl font-serif text-mystic-gold">你的塔塔书</h1>
         </div>
 
         {/* Main Tabs */}
@@ -139,17 +139,19 @@ const Header: React.FC<HeaderProps> = ({
             {user ? (
               <button 
                 onClick={handleLogout}
-                className="p-2 rounded-full hover:bg-red-900/30 text-mystic-gold transition-colors flex items-center gap-2"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-900/30 text-mystic-gold transition-colors"
                 title="登出"
               >
+                <span className="font-serif text-sm">退出</span>
                 <LogOut size={18} />
               </button>
             ) : (
               <button 
                 onClick={onOpenAuth}
-                className="p-2 rounded-full hover:bg-mystic-gold/10 text-mystic-gold transition-colors flex items-center gap-2"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-mystic-gold/10 text-mystic-gold transition-colors"
                 title="登录/注册"
               >
+                <span className="font-serif text-sm">登录</span>
                 <LogIn size={18} />
               </button>
             )}

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { auth } from '../firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -25,17 +27,46 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
 
     try {
       if (isLogin) {
-        // 登录
+        // 登录 - 不需要邀请码
         await signInWithEmailAndPassword(auth, email, password);
       } else {
-        // 注册
-        await createUserWithEmailAndPassword(auth, email, password);
+        // 注册 - 需要验证邀请码
+        if (!inviteCode.trim()) {
+          throw new Error('请输入邀请码');
+        }
+
+        // 验证邀请码
+        const inviteCodeRef = doc(db, 'inviteCodes', inviteCode.trim());
+        const inviteCodeDoc = await getDoc(inviteCodeRef);
+
+        if (!inviteCodeDoc.exists()) {
+          throw new Error('邀请码无效');
+        }
+
+        const inviteData = inviteCodeDoc.data();
+        if (inviteData.used) {
+          throw new Error('邀请码已被使用');
+        }
+
+        // 创建用户
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userId = userCredential.user.uid;
+
+        // 更新邀请码状态
+        await updateDoc(inviteCodeRef, {
+          used: true,
+          usedBy: userId,
+          usedAt: new Date().toISOString()
+        });
       }
       onAuthSuccess();
       onClose();
     } catch (err: any) {
+      console.error('注册/登录错误:', err);
       let errorMessage = '发生错误，请重试';
-      if (err.code === 'auth/email-already-in-use') {
+      if (err.message === '请输入邀请码' || err.message === '邀请码无效' || err.message === '邀请码已被使用') {
+        errorMessage = err.message;
+      } else if (err.code === 'auth/email-already-in-use') {
         errorMessage = '该邮箱已被注册';
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = '请输入有效的邮箱地址';
@@ -43,6 +74,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         errorMessage = '密码至少需要 6 个字符';
       } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
         errorMessage = '邮箱或密码错误';
+      } else if (err.message) {
+        errorMessage = err.message;
+      } else if (err.code) {
+        errorMessage = err.code;
       }
       setError(errorMessage);
     } finally {
@@ -109,6 +144,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
                 placeholder="请输入密码"
               />
             </div>
+
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-medium text-mystic-gold/70 mb-1">
+                  邀请码
+                </label>
+                <input
+                  type="text"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  required={!isLogin}
+                  className="w-full px-4 py-2 bg-[#2A2B55] border border-mystic-gold/30 rounded text-mystic-gold-light focus:outline-none focus:border-mystic-gold focus:ring-1 focus:ring-mystic-gold transition-colors"
+                  placeholder="请输入邀请码"
+                />
+              </div>
+            )}
 
             <button
               type="submit"
