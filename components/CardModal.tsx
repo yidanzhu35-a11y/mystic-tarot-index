@@ -16,12 +16,12 @@ interface CardModalProps {
   defaultTab?: TabType | 'notes';
 }
 
-const TABS: { id: TabType | 'notes'; label: string }[] = [
-  { id: 'love', label: '❤️ 感情' },
-  { id: 'career', label: '⚔️ 事业' },
-  { id: 'wealth', label: '🪙 财富' },
-  { id: 'growth', label: '✨ 成长' },
-  { id: 'notes', label: '📝 笔记' },
+const TABS: { id: TabType | 'notes'; emoji: string; label: string }[] = [
+  { id: 'love', emoji: '❤️', label: '感情' },
+  { id: 'career', emoji: '⚔️', label: '事业' },
+  { id: 'wealth', emoji: '🪙', label: '财富' },
+  { id: 'growth', emoji: '✨', label: '成长' },
+  { id: 'notes', emoji: '📝', label: '笔记' },
 ];
 
 const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFavorite, isFavorite, note, onNoteChange, onSaveNote, isSavingNote, user, defaultTab }) => {
@@ -96,7 +96,7 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFa
       ></div>
 
       {/* Modal Content */}
-      <div className="relative bg-[#1F204A] border border-mystic-gold/30 w-full max-w-4xl max-h-[90vh] rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative bg-[#1F204A] border border-mystic-gold/30 w-full max-w-4xl max-h-[95vh] md:max-h-[90vh] rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in-95 duration-200">
         
         {/* Close Button Mobile */}
         <button 
@@ -107,8 +107,8 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFa
         </button>
 
         {/* Left: Image */}
-        <div className="w-full md:w-2/5 bg-black/20 flex items-center justify-center p-6 border-b md:border-b-0 md:border-r border-mystic-gold/10">
-          <div className="relative aspect-[2/3] w-48 md:w-full max-w-[300px] shadow-2xl rounded-sm overflow-hidden border-2 border-mystic-gold/20">
+        <div className="w-full md:w-2/5 bg-black/20 flex items-center justify-center p-4 md:p-6 border-b md:border-b-0 md:border-r border-mystic-gold/10">
+          <div className="relative aspect-[2/3] w-40 md:w-48 lg:w-full max-w-[200px] md:max-w-[300px] shadow-2xl rounded-sm overflow-hidden border-2 border-mystic-gold/20">
             <img 
               src={card.image} 
               alt={card.name} 
@@ -118,7 +118,7 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFa
         </div>
 
         {/* Right: Content */}
-        <div className="w-full md:w-3/5 flex flex-col max-h-[60vh] md:max-h-full overflow-hidden">
+        <div className="w-full md:w-3/5 flex flex-col max-h-full md:max-h-full overflow-hidden">
           
           {/* Header */}
           <div className="p-6 pb-2 shrink-0">
@@ -159,19 +159,21 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFa
             </button>
             
             {/* Tab Buttons */}
-            <div className="flex space-x-4 md:space-x-6 flex-1 justify-center">
+            <div className="flex space-x-2 md:space-x-6 flex-1 justify-center">
               {TABS.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
                   className={`
-                    py-3 text-sm font-serif tracking-wider transition-all relative
+                    py-2 px-1 md:py-3 md:px-0 text-xs md:text-sm font-serif tracking-wider transition-all relative flex flex-col items-center
                     ${activeTab === tab.id 
                       ? 'text-mystic-gold font-bold' 
                       : 'text-mystic-gold/40 hover:text-mystic-gold/70'}
                   `}
                 >
-                  {tab.label}
+                  <span className="text-lg md:text-base mb-0.5 md:mb-0">{tab.emoji}</span>
+                  <span className="hidden md:inline">{tab.label}</span>
+                  <span className="md:hidden">{tab.label}</span>
                   {activeTab === tab.id && (
                     <span className="absolute bottom-0 left-0 w-full h-0.5 bg-mystic-gold shadow-[0_-2px_6px_rgba(212,175,55,0.5)]"></span>
                   )}
