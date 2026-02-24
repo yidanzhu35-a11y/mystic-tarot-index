@@ -272,15 +272,20 @@ const SpreadEditPage: React.FC<SpreadEditPageProps> = ({ spread, onBack, onSave 
                             </h3>
                           )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                           {tarotCard && (
-                            <button
-                              onClick={() => toggleReversed(card.id)}
-                              className="p-1.5 rounded-full hover:bg-mystic-gold/10 text-mystic-gold/70 hover:text-mystic-gold transition-colors"
-                              title={card.isReversed ? '设为正位' : '设为逆位'}
-                            >
-                              <RotateCcw size={16} className={card.isReversed ? 'text-red-400' : ''} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => toggleReversed(card.id)}
+                                className="p-1.5 rounded-full hover:bg-mystic-gold/10 text-mystic-gold/70 hover:text-mystic-gold transition-colors"
+                                title={card.isReversed ? '设为正位' : '设为逆位'}
+                              >
+                                <RotateCcw size={16} className={card.isReversed ? 'text-red-400' : ''} />
+                              </button>
+                              <span className={`text-sm font-serif ${card.isReversed ? 'text-red-400' : 'text-mystic-gold/70'}`}>
+                                {card.isReversed ? '逆位' : '正位'}
+                              </span>
+                            </div>
                           )}
                           <button
                             onClick={() => removeCard(card.id)}

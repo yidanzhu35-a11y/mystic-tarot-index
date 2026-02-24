@@ -35,7 +35,7 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
   };
 
   const filteredSpreads = useMemo(() => {
-    return spreads.filter(spread => {
+    const filtered = spreads.filter(spread => {
       let matchesSearch = true;
       let matchesDate = true;
 
@@ -61,6 +61,9 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
 
       return matchesSearch && matchesDate;
     });
+    
+    // 按时间倒序排列（越新的越往前排）
+    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [spreads, searchTerm, startDate, endDate]);
 
   if (loading) {
@@ -231,9 +234,9 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
                     <span>{spread.cards.length} 张牌</span>
                   </div>
 
-                  {spread.interpretation && (
+                  {spread.summary && (
                     <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
-                      {spread.interpretation}
+                      {spread.summary}
                     </p>
                   )}
                 </div>
