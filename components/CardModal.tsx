@@ -42,6 +42,12 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onToggleFa
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
       
+      // 如果正在输入框中编辑，不处理左右键事件
+      const activeElement = document.activeElement;
+      if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+        return;
+      }
+      
       const tabIds: (TabType | 'notes')[] = ['love', 'career', 'wealth', 'growth', 'notes'];
       const currentIndex = tabIds.indexOf(activeTab);
       
