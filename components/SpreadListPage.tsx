@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { SpreadRecord } from '../types';
-import { Plus, Calendar, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Calendar, Edit, Trash2, Search, FileDown, CheckSquare, Square } from 'lucide-react';
+import { exportSpreadNotesToPDF } from '../utils/pdfExport';
 
 interface SpreadListPageProps {
   spreads: SpreadRecord[];
@@ -24,6 +25,7 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [selectedSpreadIds, setSelectedSpreadIds] = useState<string[]>([]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -32,6 +34,29 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const toggleSpreadSelection = (spreadId: string) => {
+    setSelectedSpreadIds(prev => 
+      prev.includes(spreadId) 
+        ? prev.filter(id => id !== spreadId)
+        : [...prev, spreadId]
+    );
+  };
+
+  const toggleAllSelection = () => {
+    if (selectedSpreadIds.length === filteredSpreads.length) {
+      setSelectedSpreadIds([]);
+    } else {
+      setSelectedSpreadIds(filteredSpreads.map(spread => spread.id));
+    }
+  };
+
+  const handleExportPDF = () => {
+    const selectedSpreads = filteredSpreads.filter(spread => 
+      selectedSpreadIds.includes(spread.id)
+    );
+    exportSpreadNotesToPDF(selectedSpreads);
   };
 
   const filteredSpreads = useMemo(() => {
@@ -78,7 +103,48 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
   return (
     <div className="flex-1">
       <div className="max-w-7xl mx-auto px-4 py-4">
-        {/* 顶部搜索和筛选区 */}
+        {/* 顶部操作栏 */}
+        <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleAllSelection}
+              disabled={filteredSpreads.length === 0}
+              className="flex items-center gap-2 px-4 py-2 border border-mystic-gold/30 rounded-lg text-mystic-gold font-serif hover:bg-mystic-gold/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              {selectedSpreadIds.length === filteredSpreads.length && filteredSpreads.length > 0 ? (
+                <CheckSquare size={18} />
+              ) : (
+                <Square size={18} />
+              )}
+              <span>
+                {selectedSpreadIds.length === filteredSpreads.length && filteredSpreads.length > 0
+                  ? '取消全选' 
+                  : '全选'}
+              </span>
+            </button>
+            {selectedSpreadIds.length > 0 && (
+              <span className="text-mystic-gold/70 text-sm font-serif">
+                已选择 {selectedSpreadIds.length} 条记录
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExportPDF}
+              disabled={selectedSpreadIds.length === 0}
+              className={`flex items-center gap-2 px-4 py-2 border rounded-lg font-serif transition-all ${
+                selectedSpreadIds.length === 0
+                  ? 'bg-gray-700/30 text-gray-500 border-gray-600/30 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-mystic-gold/20 to-mystic-gold/10 border-mystic-gold/30 text-mystic-gold hover:bg-gradient-to-r from-mystic-gold/30 to-mystic-gold/20'
+              }`}
+            >
+              <FileDown size={18} />
+              <span>导出PDF</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 搜索和筛选区 */}
         <div className="space-y-4 mb-6">
           <div className="flex flex-wrap gap-4 items-start justify-between">
             {/* 搜索框和日期筛选 */}
@@ -187,8 +253,7 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
               {filteredSpreads.map((spread) => (
                 <div
                   key={spread.id}
-                  onClick={() => onEditSpread(spread)}
-                  className="bg-[#2A2B55] border border-mystic-gold/20 rounded-lg p-6 cursor-pointer hover:border-mystic-gold/50 hover:shadow-[0_0_20px_rgba(212,175,55,0.1)] transition-all duration-300"
+                  className="bg-[#2A2B55] border border-mystic-gold/20 rounded-lg p-6 hover:border-mystic-gold/50 hover:shadow-[0_0_20px_rgba(212,175,55,0.1)] transition-all duration-300"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex flex-col gap-1">
@@ -203,6 +268,19 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
                       )}
                     </div>
                     <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleSpreadSelection(spread.id);
+                        }}
+                        className="p-1 text-mystic-gold/50 hover:text-mystic-gold transition-colors"
+                      >
+                        {selectedSpreadIds.includes(spread.id) ? (
+                          <CheckSquare size={18} />
+                        ) : (
+                          <Square size={18} />
+                        )}
+                      </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -226,7 +304,10 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
                     </div>
                   </div>
                   
-                  <h3 className="text-lg font-serif text-mystic-gold mb-3 line-clamp-2">
+                  <h3 
+                    className="text-lg font-serif text-mystic-gold mb-3 line-clamp-2 cursor-pointer hover:underline"
+                    onClick={() => onEditSpread(spread)}
+                  >
                     {spread.question || '无问题描述'}
                   </h3>
                   
@@ -235,7 +316,10 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
                   </div>
 
                   {spread.summary && (
-                    <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
+                    <p 
+                      className="text-gray-400 text-sm leading-relaxed line-clamp-3 cursor-pointer"
+                      onClick={() => onEditSpread(spread)}
+                    >
                       {spread.summary}
                     </p>
                   )}
