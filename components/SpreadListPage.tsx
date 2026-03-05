@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { SpreadRecord } from '../types';
 import { Plus, Calendar, Edit, Trash2, Search, FileDown, CheckSquare, Square } from 'lucide-react';
-import { exportSpreadNotesToPDF } from '../utils/pdfExport';
+import { exportSpreadNotesToPrint } from '../utils/pdfExport';
 
 interface SpreadListPageProps {
   spreads: SpreadRecord[];
@@ -56,7 +56,7 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
     const selectedSpreads = filteredSpreads.filter(spread => 
       selectedSpreadIds.includes(spread.id)
     );
-    exportSpreadNotesToPDF(selectedSpreads);
+    exportSpreadNotesToPrint(selectedSpreads);
   };
 
   const filteredSpreads = useMemo(() => {
@@ -139,7 +139,7 @@ const SpreadListPage: React.FC<SpreadListPageProps> = ({
               }`}
             >
               <FileDown size={18} />
-              <span>导出PDF</span>
+              <span>打印</span>
             </button>
           </div>
         </div>

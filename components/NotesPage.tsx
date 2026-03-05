@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TarotCard, CardCategory, Notes } from '../types';
 import { TAROT_DECK } from '../constants';
-import { exportSingleCardNotesToPDF } from '../utils/pdfExport';
+import { exportSingleCardNotesToPrint } from '../utils/pdfExport';
 import { FileDown, CheckSquare, Square } from 'lucide-react';
 
 interface NotesPageProps {
@@ -51,7 +51,7 @@ const NotesPage: React.FC<NotesPageProps> = ({ notes, onOpenCard, loading }) => 
   };
 
   const handleExportPDF = () => {
-    exportSingleCardNotesToPDF(notes, selectedCardIds);
+    exportSingleCardNotesToPrint(notes, selectedCardIds);
   };
 
   if (loading) {
@@ -112,7 +112,7 @@ const NotesPage: React.FC<NotesPageProps> = ({ notes, onOpenCard, loading }) => 
           }`}
         >
           <FileDown size={18} />
-          <span>导出PDF</span>
+          <span>打印</span>
         </button>
       </div>
 
