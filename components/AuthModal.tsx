@@ -35,9 +35,28 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           throw new Error('请输入邀请码');
         }
 
-        // 验证邀请码
-        const inviteCodeRef = doc(db, 'inviteCodes', inviteCode.trim());
-        const inviteCodeDoc = await getDoc(inviteCodeRef);
+        // 验证邀请码 - 添加重试逻辑
+        let inviteCodeDoc;
+        let maxRetries = 3;
+        let retryCount = 0;
+        
+        while (retryCount < maxRetries) {
+          try {
+            const inviteCodeRef = doc(db, 'inviteCodes', inviteCode.trim());
+            inviteCodeDoc = await getDoc(inviteCodeRef);
+            break;
+          } catch (retryErr: any) {
+            retryCount++;
+            if (retryCount >= maxRetries) {
+              throw retryErr;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+
+        if (!inviteCodeDoc) {
+          throw new Error('邀请码验证失败，请检查网络连接后重试');
+        }
 
         if (!inviteCodeDoc.exists()) {
           throw new Error('邀请码无效');
@@ -53,6 +72,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         const userId = userCredential.user.uid;
 
         // 更新邀请码状态
+        const inviteCodeRef = doc(db, 'inviteCodes', inviteCode.trim());
         await updateDoc(inviteCodeRef, {
           used: true,
           usedBy: userId,
@@ -64,6 +84,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
     } catch (err: any) {
       console.error('注册/登录错误:', err);
       let errorMessage = '发生错误，请重试';
+      
       if (err.message === '请输入邀请码' || err.message === '邀请码无效' || err.message === '邀请码已被使用') {
         errorMessage = err.message;
       } else if (err.code === 'auth/email-already-in-use') {
@@ -74,6 +95,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         errorMessage = '密码至少需要 6 个字符';
       } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
         errorMessage = '邮箱或密码错误';
+      } else if (err.message && err.message.includes('offline')) {
+        errorMessage = '网络连接不稳定，请检查网络后重试';
       } else if (err.message) {
         errorMessage = err.message;
       } else if (err.code) {
